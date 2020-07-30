@@ -1,0 +1,436 @@
+{
+	"info": {
+		"_postman_id": "bb843bdd-129e-41a7-8ff7-fc1922e5896b",
+		"name": "APIS Validation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Carolina",
+									"type": "text"
+								},
+								{
+									"key": "fullName",
+									"value": "Prieto",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/cristhoperalvarez/Pictures/Photos Library.photoslibrary/originals/9/9B6C9269-8863-4C8B-8AAA-FB527178B6E0.jpeg"
+								},
+								{
+									"key": "mail",
+									"value": "test@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "111111",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "111111111",
+									"type": "text"
+								},
+								{
+									"key": "role",
+									"value": "U",
+									"type": "text"
+								},
+								{
+									"key": "specialty",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mail\": \"test@gmail.com\"\n    , \"password\": \"111111\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Mobile",
+			"item": [
+				{
+					"name": "Get All Expert",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODU2OTQyfQ.J-mlZN5iDhUEhUI5gjU71HnTo-cXkXfVKCGnskA6ABg",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/expert",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"expert"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Expert By Id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODU2OTQyfQ.J-mlZN5iDhUEhUI5gjU71HnTo-cXkXfVKCGnskA6ABg"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/expert/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"expert",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Solicitude",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "repository",
+									"type": "file",
+									"src": "/Users/cristhoperalvarez/Documents/validation-db.sql"
+								},
+								{
+									"key": "investigation",
+									"type": "file",
+									"src": "/Users/cristhoperalvarez/Documents/validation-db.mwb"
+								},
+								{
+									"key": "userId",
+									"value": "8",
+									"type": "text"
+								},
+								{
+									"key": "expertId",
+									"value": "3",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "P",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/mobile/solicitude",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"solicitude"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Solicitude By User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/solicitude/user/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"solicitude",
+								"user",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Solicitude Answer By Solicitude",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/solicitude-answer/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"solicitude-answer",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All User Solicitude by Expert",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/solicitude-user/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"solicitude-user",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Detail User Solicitude by Expert",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/solicitude-user-expert/5",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"solicitude-user-expert",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Solicitude Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/solicitude/5/C",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"solicitude",
+								"5",
+								"C"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Answer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "comments",
+									"value": "Successfully",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/cristhoperalvarez/Documents/validation-db.sql"
+								},
+								{
+									"key": "solicitudeId",
+									"value": "5",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/mobile/answer",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"answer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Solicitude By Expert",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwiZXhwIjoxNTk0ODYyNDUyfQ.JuCR-sP9qQowXAnxqY2na7nmprnEwV2I0CgG8xpyasw"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/mobile/solicitude/expert/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"mobile",
+								"solicitude",
+								"expert",
+								"3"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
