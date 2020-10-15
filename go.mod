@@ -11,5 +11,6 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/viper v1.7.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )

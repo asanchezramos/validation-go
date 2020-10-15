@@ -2,19 +2,20 @@ package handler
 
 import (
 	"fmt"
-	"github.com/goandreus/validation-go/datalayer/datastore"
-	"github.com/goandreus/validation-go/model"
-	"github.com/goandreus/validation-go/pkg/encrypt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	"gopkg.in/go-playground/validator.v9"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/goandreus/validation-go/datalayer/datastore"
+	"github.com/goandreus/validation-go/model"
+	"github.com/goandreus/validation-go/pkg/encrypt"
+	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 // MobileHandler  represent the httphandler for auth endpoints
@@ -113,7 +114,7 @@ func (a *AuthHandler) Login(c echo.Context) error {
 
 	user, err := a.db.GetUserByEmail(auth.Mail)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false,Message: "Experto no encontrado"})
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Experto no encontrado"})
 	}
 
 	compare := encrypt.BcryptCheck(*user.Password, auth.Password)
