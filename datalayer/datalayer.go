@@ -3,6 +3,8 @@ package datalayer
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
 	"reflect"
 
 	"github.com/goandreus/validation-go/datalayer/datastore"
@@ -23,6 +25,13 @@ type MysqlDatabase struct {
 func NewDatastore() datastore.Datastore {
 	return &MysqlDatastore{}
 }
+func mustGetenv(k string) string {
+	v := os.Getenv(k)
+	if v == "" {
+		log.Fatalf("Warning: %s environment variable not set.\n", k)
+	}
+	return v
+}
 
 //Open
 func (p *MysqlDatastore) Open() (datastore.Database, error) {
@@ -31,8 +40,22 @@ func (p *MysqlDatastore) Open() (datastore.Database, error) {
 			viper.Get("VALIDATION_DB_PASSWORD"), viper.Get("VALIDATION_DB_HOST"),
 			viper.Get("VALIDATION_DB_PORT"), viper.Get("VALIDATION_DB_NAME"))
 	*/
+	var (
+		dbUser                 = mustGetenv("CLOUDSQL_USER")            // e.g. 'my-db-user'
+		dbPwd                  = mustGetenv("CLOUDSQL_PASSWORD")        // e.g. 'my-db-password'
+		instanceConnectionName = mustGetenv("CLOUDSQL_CONNECTION_NAME") // e.g. 'project:region:instance'
+		dbName                 = mustGetenv("CLOUDSQL_DATABASE")        // e.g. 'my-database'
+	)
 
-	connString := "root:UmaDev2020!@tcp(35.247.255.202:3306)/bd_juicio_experto"
+	socketDir, isSet := os.LookupEnv("DB_SOCKET_DIR")
+	if !isSet {
+		socketDir = "/cloudsql"
+	}
+
+	var connString string
+	connString = fmt.Sprintf("%s:%s@unix(/%s/%s)/%s?parseTime=true", dbUser, dbPwd, socketDir, instanceConnectionName, dbName)
+
+	//connString := "root:UmaDev2020!@tcp(35.247.255.202:3306)/bd_juicio_experto"
 	db, err := sql.Open("mysql", connString)
 	if err != nil {
 		return nil, err

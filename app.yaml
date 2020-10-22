@@ -16,4 +16,13 @@
 # The settings below are to reduce costs during testing and are not appropriate
 # for production use. For more information, see:
 # https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml
-runtime: go114 # replace with go111 for Go 1.11
+runtime: go114 # replace with go111 for Go 1.11runtime: go114
+env_variables:
+  # Replace INSTANCE_CONNECTION_NAME with the value obtained when configuring your
+  # Cloud SQL instance, available from the Google Cloud Console or from the Cloud SDK.
+  # For Cloud SQL 2nd generation instances, this should be in the form of "project:region:insta$
+  CLOUDSQL_CONNECTION_NAME: teoc-peru:southamerica-east1:umadev-mysql
+  # Replace username and password if you aren't using the root user.
+  CLOUDSQL_USER: experto
+  CLOUDSQL_PASSWORD: TeocPeru2020!
+  CLOUDSQL_DATABASE: bd_juicio_experto
