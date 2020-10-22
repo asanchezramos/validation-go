@@ -6,6 +6,7 @@ import "github.com/goandreus/validation-go/model"
 type Datastore interface {
 	Open() (Database, error)
 }
+
 // Database is the main interface implemented by database providers
 type Database interface {
 	Register(user model.User) (*int64, error)
@@ -20,4 +21,23 @@ type Database interface {
 	CreateAnswer(answer model.Answer) (*int64, error)
 	UpdateStatusSolicitude(solicitudeId int, status string) (*int64, error)
 	GetAllSolicitudeByExpert(expertId int) ([]*model.SolicitudeUser, error)
+
+	GetNetworkByUser(userId int) ([]*model.User, error)
+	GetExpertFindParam(param string) ([]*model.User, error)
+	CreateNetworkRequest(networkRequest model.NetworkRequest) (*int64, error)
+	GetResearchByUser(userId int) ([]*model.Research, error)
+	GetDimensionByResearchId(researchId int) ([]*model.Dimension, error)
+	CreateDimension(dimension model.Dimension) (*int64, error)
+	CreateResearch(research model.Research) (*int64, error)
+	DeleteDimension(dimensionId int) (*int64, error)
+	UpdateResearchStatus(research model.Research) (*int64, error)
+	UpdateDimensionStatus(dimension model.Dimension) (*int64, error)
+	GetResearchById(researchId int) (*model.Research, error)
+	GetCriterioByExpert(speciality string, expertId int) ([]*model.Criterio, error)
+	UpdateResearch(research model.Research) (*int64, error)
+	DeleteResearch(researchId int) (*int64, error)
+	GetResearchByExpert(userId int, status int) ([]*model.Research, error)
+	GetCriterioResponseByResearchId(researchId int) ([]*model.CriterioResponse, error)
+	CreateCriterioResponse(criterioResponse model.CriterioResponse) (*int64, error)
+	UpdateCriterioResponse(criterioResponse model.CriterioResponse) (*int64, error)
 }

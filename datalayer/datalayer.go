@@ -32,7 +32,7 @@ func (p *MysqlDatastore) Open() (datastore.Database, error) {
 			viper.Get("VALIDATION_DB_PORT"), viper.Get("VALIDATION_DB_NAME"))
 	*/
 
-	connString := "root:@tcp(localhost:3306)/bd_juicio_experto"
+	connString := "root:UmaDev2020!@tcp(35.247.255.202:3306)/bd_juicio_experto"
 	db, err := sql.Open("mysql", connString)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (m *MysqlDatabase) GetExpertById(expertId int) (*model.User, error) {
 
 	item := &model.User{}
 
-	row := tx.QueryRow("SELECT * FROM `user` WHERE user_id = ? AND role = 'E' AND `status` = ?", expertId, status)
+	row := tx.QueryRow("SELECT * FROM `user` WHERE user_id = ? AND `status` = ?", expertId, status)
 
 	if row != nil {
 		err := row.Scan(ScanRow(item)...)
@@ -422,7 +422,6 @@ func (m *MysqlDatabase) GetSolicitudeStudentBySolicitudeId(solicitudeId int) ([]
 
 	return result, nil
 }
-
 func (m *MysqlDatabase) CreateAnswer(answer model.Answer) (*int64, error) {
 	tx, err := m.db.Begin()
 	if err != nil {
@@ -456,7 +455,6 @@ func (m *MysqlDatabase) CreateAnswer(answer model.Answer) (*int64, error) {
 
 	return &id, nil
 }
-
 func (m *MysqlDatabase) UpdateStatusSolicitude(solicitudeId int, status string) (*int64, error) {
 	tx, err := m.db.Begin()
 	if err != nil {
@@ -490,7 +488,6 @@ func (m *MysqlDatabase) UpdateStatusSolicitude(solicitudeId int, status string) 
 
 	return &rows, nil
 }
-
 func (m *MysqlDatabase) GetAllSolicitudeByExpert(expertId int) ([]*model.SolicitudeUser, error) {
 	result := make([]*model.SolicitudeUser, 0)
 
@@ -574,4 +571,627 @@ func ScanRow(row interface{}) []interface{} {
 	}
 
 	return columns
+}
+func (m *MysqlDatabase) GetNetworkByUser(userId int) ([]*model.User, error) {
+	status := 1
+	expert := "E"
+	result := make([]*model.User, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `user`.* FROM `user` inner join `network` on `user`.`user_id` = `network`.`user_relation_id` where `network`.`user_base_id` = ? and `user`.`status` = ? and `user`.`role`= ?", userId, status, expert)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.User{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		items.Password = nil
+
+		if items.Photo != nil {
+			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
+		}
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) GetExpertFindParam(param string) ([]*model.User, error) {
+	status := 1
+	expert := "E"
+	result := make([]*model.User, 0)
+	paramAux := "%" + param + "%"
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `user`.* FROM `user` where CONCAT(`user`.`name`,' ',`user`.`full_name`, ' ' ,  COALESCE(`user`.`specialty`,'') ) like ? and `user`.`status` = ? and `user`.`role`= ?", paramAux, status, expert)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.User{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		items.Password = nil
+
+		if items.Photo != nil {
+			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
+		}
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) CreateNetworkRequest(networkRequest model.NetworkRequest) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO `network_request`(  `user_base_id`, `user_relation_id`, `status`) VALUES (?,?,?)")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(networkRequest.UserBaseId, networkRequest.UserRelationId, networkRequest.Status)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) GetResearchByUser(userId int) ([]*model.Research, error) {
+	result := make([]*model.Research, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `research_id`, `researcher_id`, `expert_id`, `title`, `speciality`, `authors`, `observation`, `attachment_one`, `attachment_two`, `status`, `created_at`, `updated_at` FROM `research` WHERE  `researcher_id` = ?", userId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.Research{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) GetDimensionByResearchId(researchId int) ([]*model.Dimension, error) {
+	result := make([]*model.Dimension, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `dimension_id`, `research_id`, `name`, `variable`, `status`, `created_at`, `updated_at` FROM `dimension` WHERE `research_id` = ?", researchId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.Dimension{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) CreateDimension(dimension model.Dimension) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO `dimension`( `research_id`, `name`, `variable`) VALUES (?,?,?)")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(dimension.ResearchId, dimension.Name, dimension.Variable)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) CreateResearch(research model.Research) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO `research`( `researcher_id`, `expert_id`, `title`, `speciality`, `authors`, `observation`, `attachment_one`, `attachment_two`) VALUES (?,?,?,?,?,?,?,?)")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(research.ResearcherId, research.ExpertId, research.Title, research.Speciality, research.Authors, research.Observation, research.AttachmentOne, research.AttachmentTwo)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) DeleteDimension(dimensionId int) (*int64, error) {
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("DELETE FROM `dimension` WHERE `dimension_id` = ?")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(dimensionId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) UpdateResearchStatus(research model.Research) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("UPDATE `research` SET  `observation` = ? , `status` = ? where `research_id` = ?")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(research.Observation, research.Status, research.ResearchId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) UpdateResearch(research model.Research) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("UPDATE `research` SET `researcher_id`=?,`expert_id`=?,`title`=?,`speciality`=?,`authors`=?,`observation`=?,`attachment_one`=?,`attachment_two`=?,`status`=? WHERE `research_id`=?")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(research.ResearcherId, research.ExpertId, research.Title, research.Speciality, research.Authors, research.Observation, research.AttachmentOne, research.AttachmentTwo, research.Status, research.ResearchId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) UpdateDimensionStatus(dimension model.Dimension) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("UPDATE `dimension` SET  `status` = ? WHERE `dimension_id` = ?")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(dimension.Status, dimension.DimensionId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) GetResearchById(researchId int) (*model.Research, error) {
+
+	fmt.Println(researchId)
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+		tx.Rollback()
+	}
+
+	item := &model.Research{}
+
+	rows := tx.QueryRow("SELECT `research_id`, `researcher_id`, `expert_id`, `title`, `speciality`, `authors`, `observation`, `attachment_one`, `attachment_two`, `status`, `created_at`, `updated_at` FROM `research` WHERE  `research_id` = ?", researchId)
+
+	if rows != nil {
+		err := rows.Scan(ScanRow(item)...)
+		fmt.Println(err)
+		if err != nil {
+			return nil, err
+			tx.Rollback()
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return item, nil
+}
+func (m *MysqlDatabase) GetCriterioByExpert(speciality string, expertId int) ([]*model.Criterio, error) {
+	result := make([]*model.Criterio, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `criterio_id`, `name`, `speciality`, `expert_id`, `created_at`, `updated_at` FROM `criterio` WHERE `speciality` = ? and `expert_id` = ?", speciality, expertId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.Criterio{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) CreateCriterioResponse(criterioResponse model.CriterioResponse) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO `criterio_response`( `research_id`, `dimension_id`, `status`, `criterio_id`) VALUES (?,?,?,?)")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(criterioResponse.ResearchId, criterioResponse.DimensionId, criterioResponse.Status, criterioResponse.CriterioId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) UpdateCriterioResponse(criterioResponse model.CriterioResponse) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("UPDATE `criterio_response` SET `research_id`=?,`dimension_id`=?,`status`=? , `criterio_id` = ? WHERE  `criterio_response_id` = ?")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(criterioResponse.ResearchId, criterioResponse.DimensionId, criterioResponse.Status, criterioResponse.CriterioId, criterioResponse.CriterioResponseId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) DeleteResearch(researchId int) (*int64, error) {
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("DELETE FROM `research` WHERE `research_id` = ?")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(researchId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) GetResearchByExpert(userId int, status int) ([]*model.Research, error) {
+	result := make([]*model.Research, 0)
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := tx.Query("SELECT `research_id`, `researcher_id`, `expert_id`, `title`, `speciality`, `authors`, `observation`, `attachment_one`, `attachment_two`, `status`, `created_at`, `updated_at` FROM `research` WHERE  `expert_id` = ? and `status` in (?,5,6)", userId, status)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.Research{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) GetCriterioResponseByResearchId(researchId int) ([]*model.CriterioResponse, error) {
+	result := make([]*model.CriterioResponse, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `criterio_response_id`, `criterio_id`, `research_id`, `dimension_id`, `status`, `created_at`, `updated_at` FROM `criterio_response` WHERE  `research_id` = ?", researchId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.CriterioResponse{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
