@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/goandreus/validation-go/config"
 	"github.com/goandreus/validation-go/datalayer"
 	"github.com/goandreus/validation-go/handler"
 	"github.com/goandreus/validation-go/model"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"os"
 )
 
 func init() {
@@ -25,7 +26,7 @@ func init() {
 	}
 }
 
-func main()  {
+func main() {
 	datastore := datalayer.NewDatastore()
 	db, err := datastore.Open()
 	if err != nil {
@@ -46,7 +47,7 @@ func main()  {
 	r.Use(middleware.JWTWithConfig(configJwt))
 	handler.NewMobileHandler(r, db)
 
-	e.Logger.Fatal(e.Start(":3000"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
 
 func ensureDir(dirName string) error {
