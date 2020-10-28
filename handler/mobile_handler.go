@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/goandreus/validation-go/datalayer/datastore"
 	"github.com/goandreus/validation-go/model"
+	"github.com/jung-kurt/gofpdf"
 	"github.com/labstack/echo/v4"
 )
 
@@ -54,6 +56,14 @@ func NewMobileHandler(e *echo.Group, db datastore.Database) {
 	g.DELETE("/research-delete/:researchId", handler.FetchDeleteResearch)
 	g.GET("/research-revision/:userId", handler.FetchResearchByExpert)
 	g.GET("/criterio-response-get/:researchId", handler.FetchCriterioResponseByResearchId)
+	g.PUT("/dimension-update-only/:dimensionId", handler.UpdateDimension)
+	g.GET("/certificate/:researchId", handler.FetchCertificateByResearchId)
+	g.GET("/network-request/:userId", handler.FetchNetworkRequestByUserId)
+	g.GET("/network-request-expert/:userId", handler.FetchNetworkRequestByExpertId)
+	g.PUT("/network-request-response/:userBaseId/:userRelationId", handler.NetworkRequestResponse)
+	g.DELETE("/resource-user/:resourceUserId", handler.FetchDeleteResourceUser)
+	g.POST("/resource-user-post", handler.FetchCreateResourceUser)
+	g.GET("/resource-user-post/:userId", handler.FetchResourcesUserBy)
 
 }
 
@@ -62,7 +72,6 @@ func (m *MobileHandler) FetchAllExpert(c echo.Context) error {
 	if err != nil {
 		return c.JSON(getStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
-
 	response := model.Response{
 		Success: true,
 		Data:    data,
@@ -485,6 +494,40 @@ func (m *MobileHandler) CreateDimension(c echo.Context) error {
 	dimension.Status = "P"
 
 	id, err := m.db.CreateDimension(dimension)
+	if err != nil {
+		return c.JSON(getStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+
+	if id == nil {
+		response.Success = false
+		response.Message = "Error al crear respuesta"
+	} else {
+		response.Success = true
+		response.Message = "Respuesta Creada"
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+func (m *MobileHandler) UpdateDimension(c echo.Context) error {
+	var dimension model.Dimension
+	response := model.ResponseMessage{}
+
+	dimensionIdStr := c.Param("dimensionId")
+	dimensionId, _ := strconv.Atoi(dimensionIdStr)
+	dimension.DimensionId = dimensionId
+	researchIdStr := c.FormValue("researchId")
+	researchId, _ := strconv.Atoi(researchIdStr)
+	dimension.ResearchId = researchId
+
+	nameStr := c.FormValue("name")
+	dimension.Name = nameStr
+	variableStr := c.FormValue("variable")
+	dimension.Variable = variableStr
+
+	statusStr := c.FormValue("status")
+	dimension.Status = statusStr
+
+	id, err := m.db.UpdateDimension(dimension)
 	if err != nil {
 		return c.JSON(getStatusCode(err), model.ResponseError{Message: err.Error()})
 	}
@@ -966,6 +1009,225 @@ func (m *MobileHandler) FetchCriterioResponseByResearchId(c echo.Context) error 
 	response := model.Response{
 		Success: true,
 		Data:    data,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
+	researchIdStr := c.Param("researchId")
+	if researchIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+	researchId, _ := strconv.Atoi(researchIdStr)
+	data, err := m.db.GetResearchById(researchId)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Usuario no encontrado"})
+	}
+
+	pdf := gofpdf.New("L", "mm", "A4", "")
+
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
+	pdf.SetTitle("Certificado", true)
+	pdf.SetTopMargin(10)
+	pdf.AddPage()
+	pdf.SetFont("Times", "B", 28)
+	pdf.CellFormat(0, 10, "Certificado de validez", "", 0, "C", false, 0, "")
+	pdf.Ln(12)
+	pdf.SetFont("Times", "", 20)
+	pdf.CellFormat(0, 10, tr("POR MEDIO DE LA PRESENTE SE CERTIFICA LA VALIDEZ DE LA INVESTIGACIÓN"), "", 0, "C", false, 0, "")
+	pdf.Ln(20)
+	pdf.SetFont("Times", "", 35)
+	pdf.CellFormat(0, 20, tr(string(data.Title)), "", 2, "C", false, 0, "")
+
+	pdf.Ln(12)
+	pdf.SetFont("Times", "", 20)
+	pdf.CellFormat(0, 10, "DE LOS AUTORES", "", 1, "C", false, 0, "")
+	pdf.Ln(20)
+	pdf.SetFont("Times", "", 35)
+	pdf.CellFormat(0, 10, tr(data.Authors), "", 0, "C", false, 0, "")
+	pdf.Ln(20)
+	pdf.SetFont("Times", "", 20)
+	pdf.CellFormat(0, 10, data.UpdatedAt, "", 0, "C", false, 0, "")
+	//pdf table header
+	//pdf = header(pdf, []string{"1st column", "2nd", "3rd", "4th", "5th", "6th"})
+
+	//pdf table content
+	//pdf = table(pdf, data)
+
+	if pdf.Err() {
+		log.Fatalf("failed ! %s", pdf.Error())
+	}
+	attachmentName := fmt.Sprintf("%d-%s", time.Now().Unix(), "certificado.pdf")
+	//attachmentName := "attachment.pdf"
+	//attachmentOneName = fmt.Sprintf("%d-%s", time.Now().Unix(), strings.ReplaceAll(attachmentOne.Filename, " ", "_"))
+
+	errx := pdf.OutputFileAndClose("./public/" + attachmentName)
+	if errx != nil {
+		log.Fatalf("error saving pdf file: %s", errx)
+	}
+	response := model.Response{
+		Success: true,
+		Data:    attachmentName,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (m *MobileHandler) FetchNetworkRequestByUserId(c echo.Context) error {
+	userIdStr := c.Param("userId")
+	if userIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+
+	userId, _ := strconv.Atoi(userIdStr)
+
+	data, err := m.db.FetchNetworkRequestByUserId(userId)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Usuario no encontrado"})
+	}
+
+	response := model.Response{
+		Success: true,
+		Data:    data,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+func (m *MobileHandler) FetchNetworkRequestByExpertId(c echo.Context) error {
+
+	userIdStr := c.Param("userId")
+	if userIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+
+	userId, _ := strconv.Atoi(userIdStr)
+
+	data, err := m.db.FetchNetworkRequestByExpertId(userId)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Usuario no encontrado"})
+	}
+
+	response := model.Response{
+		Success: true,
+		Data:    data,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (m *MobileHandler) NetworkRequestResponse(c echo.Context) error {
+
+	userBaseIdStr := c.Param("userBaseId")
+	if userBaseIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+
+	userBaseId, _ := strconv.Atoi(userBaseIdStr)
+
+	userRelationIdStr := c.Param("userRelationId")
+	if userRelationIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+
+	userRelationId, _ := strconv.Atoi(userRelationIdStr)
+	var network model.Network
+	network.UserBaseId = userBaseId
+	network.UserRelationId = userRelationId
+	id, err := m.db.CreateNetwork(network)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Usuario no encontrado"})
+	}
+
+	var networkRequest model.NetworkRequest
+	networkRequest.Status = 2
+	networkRequest.UserBaseId = userBaseId
+	networkRequest.UserRelationId = userRelationId
+	id, errs := m.db.UpdateNetworkRequest(networkRequest)
+	if errs != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Usuario no encontrado"})
+	}
+
+	response := model.Response{
+		Success: true,
+		Data:    id,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+func (m *MobileHandler) FetchResourcesUserBy(c echo.Context) error {
+
+	userIdStr := c.Param("userId")
+	if userIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+
+	userId, _ := strconv.Atoi(userIdStr)
+
+	data, err := m.db.FetchAllResourceUserById(userId)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Usuario no encontrado"})
+	}
+
+	response := model.Response{
+		Success: true,
+		Data:    data,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (m *MobileHandler) FetchCreateResourceUser(c echo.Context) error {
+	var resourceUser model.ResourceUser
+	response := model.ResponseMessage{}
+	titleStr := c.FormValue("title")
+	resourceUser.Title = titleStr
+
+	subtitleStr := c.FormValue("subtitle")
+	resourceUser.Subtitle = subtitleStr
+
+	linkStr := c.FormValue("link")
+	resourceUser.Link = linkStr
+
+	expertIdStr := c.FormValue("expertId")
+	expertId, _ := strconv.Atoi(expertIdStr)
+	resourceUser.ExpertId = expertId
+	id, err := m.db.CreateResourceUser(resourceUser)
+	if err != nil {
+		return c.JSON(getStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+
+	if id == nil {
+		response.Success = false
+		response.Message = "Error al crear respuesta"
+	} else {
+		response.Success = true
+		response.Message = "Respuesta Creada"
+		response.Data = id
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+func (m *MobileHandler) FetchDeleteResourceUser(c echo.Context) error {
+
+	response := model.ResponseMessage{}
+	resourceUserIdStr := c.Param("resourceUserId")
+	if resourceUserIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+	resourceUserId, _ := strconv.Atoi(resourceUserIdStr)
+
+	id, err := m.db.DeleteResourceUser(resourceUserId)
+	if err != nil {
+		return c.JSON(getStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+
+	if id == nil {
+		response.Success = false
+		response.Message = "Error al crear respuesta"
+	} else {
+		response.Success = true
+		response.Message = "Respuesta Creada"
+		response.Data = id
 	}
 
 	return c.JSON(http.StatusOK, response)

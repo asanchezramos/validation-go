@@ -40,4 +40,12 @@ type Database interface {
 	GetCriterioResponseByResearchId(researchId int) ([]*model.CriterioResponse, error)
 	CreateCriterioResponse(criterioResponse model.CriterioResponse) (*int64, error)
 	UpdateCriterioResponse(criterioResponse model.CriterioResponse) (*int64, error)
+	UpdateDimension(dimension model.Dimension) (*int64, error)
+	FetchNetworkRequestByUserId(userId int) ([]*model.User, error)
+	FetchNetworkRequestByExpertId(userId int) ([]*model.User, error)
+	CreateNetwork(network model.Network) (*int64, error)
+	UpdateNetworkRequest(networkReuest model.NetworkRequest) (*int64, error)
+	CreateResourceUser(resourceUser model.ResourceUser) (*int64, error)
+	DeleteResourceUser(resourceUserId int) (*int64, error)
+	FetchAllResourceUserById(userId int) ([]*model.ResourceUser, error)
 }

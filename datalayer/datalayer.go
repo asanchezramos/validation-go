@@ -9,7 +9,6 @@ import (
 
 	"github.com/goandreus/validation-go/datalayer/datastore"
 	"github.com/goandreus/validation-go/model"
-	"github.com/spf13/viper"
 )
 
 type MysqlDatastore struct {
@@ -36,26 +35,27 @@ func mustGetenv(k string) string {
 //Open
 func (p *MysqlDatastore) Open() (datastore.Database, error) {
 	/*
-		uri := fmt.Sprintf(viper.Get("VALIDATION_DB_USER"), ":", viper.Get("VALIDATION_DB_PASSWORD"), "@tcp(localhost:3306)/%s?charset=utf8", viper.Get("VALIDATION_DB_USER"),
-			viper.Get("VALIDATION_DB_PASSWORD"), viper.Get("VALIDATION_DB_HOST"),
-			viper.Get("VALIDATION_DB_PORT"), viper.Get("VALIDATION_DB_NAME"))
+			uri := fmt.Sprintf(viper.Get("VALIDATION_DB_USER"), ":", viper.Get("VALIDATION_DB_PASSWORD"), "@tcp(localhost:3306)/%s?charset=utf8", viper.Get("VALIDATION_DB_USER"),
+				viper.Get("VALIDATION_DB_PASSWORD"), viper.Get("VALIDATION_DB_HOST"),
+				viper.Get("VALIDATION_DB_PORT"), viper.Get("VALIDATION_DB_NAME"))
+
+		var (
+			dbUser                 = mustGetenv("CLOUDSQL_USER")            // e.g. 'my-db-user'
+			dbPwd                  = mustGetenv("CLOUDSQL_PASSWORD")        // e.g. 'my-db-password'
+			instanceConnectionName = mustGetenv("CLOUDSQL_CONNECTION_NAME") // e.g. 'project:region:instance'
+			dbName                 = mustGetenv("CLOUDSQL_DATABASE")        // e.g. 'my-database'
+		)
+
+		socketDir, isSet := os.LookupEnv("DB_SOCKET_DIR")
+		if !isSet {
+			socketDir = "/cloudsql"
+		}
 	*/
-	var (
-		dbUser                 = mustGetenv("CLOUDSQL_USER")            // e.g. 'my-db-user'
-		dbPwd                  = mustGetenv("CLOUDSQL_PASSWORD")        // e.g. 'my-db-password'
-		instanceConnectionName = mustGetenv("CLOUDSQL_CONNECTION_NAME") // e.g. 'project:region:instance'
-		dbName                 = mustGetenv("CLOUDSQL_DATABASE")        // e.g. 'my-database'
-	)
-
-	socketDir, isSet := os.LookupEnv("DB_SOCKET_DIR")
-	if !isSet {
-		socketDir = "/cloudsql"
-	}
-
 	var connString string
-	connString = fmt.Sprintf("%s:%s@unix(/%s/%s)/%s?parseTime=true", dbUser, dbPwd, socketDir, instanceConnectionName, dbName)
+	//connString = fmt.Sprintf("%s:%s@unix(/%s/%s)/%s?parseTime=true", dbUser, dbPwd, socketDir, instanceConnectionName, dbName)
 
-	//connString := "root:UmaDev2020!@tcp(35.247.255.202:3306)/bd_juicio_experto"
+	connString = "root:UmaDev2020!@tcp(35.247.255.202:3306)/bd_juicio_experto"
+	//connString = "root:@tcp(localhost:3306)/bd_juicio_experto"
 	db, err := sql.Open("mysql", connString)
 	if err != nil {
 		return nil, err
@@ -124,9 +124,6 @@ func (m *MysqlDatabase) GetUserByEmail(email string) (*model.User, error) {
 			tx.Rollback()
 		}
 
-		if item.Photo != nil {
-			*item.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *item.Photo)
-		}
 	}
 
 	err = tx.Commit()
@@ -166,10 +163,6 @@ func (m *MysqlDatabase) GetAllExpert() ([]*model.User, error) {
 		}
 		items.Password = nil
 
-		if items.Photo != nil {
-			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
-		}
-
 		result = append(result, items)
 	}
 
@@ -198,10 +191,6 @@ func (m *MysqlDatabase) GetExpertById(expertId int) (*model.User, error) {
 		if err != nil {
 			return nil, err
 			tx.Rollback()
-		}
-
-		if item.Photo != nil {
-			*item.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *item.Photo)
 		}
 	}
 
@@ -331,14 +320,6 @@ func (m *MysqlDatabase) GetAnswerBySolicitude(solicitudeId int) ([]*model.Expert
 			return nil, err
 		}
 
-		if items.Photo != nil {
-			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
-		}
-
-		if items.File != nil {
-			*items.File = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.File)
-		}
-
 		result = append(result, items)
 	}
 
@@ -379,9 +360,6 @@ func (m *MysqlDatabase) GetAllUserByExpert(expertId int) ([]*model.UserSolicitud
 			return nil, err
 		}
 
-		if items.Photo != nil {
-			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
-		}
 		items.Password = nil
 
 		result = append(result, items)
@@ -421,18 +399,6 @@ func (m *MysqlDatabase) GetSolicitudeStudentBySolicitudeId(solicitudeId int) ([]
 		if err != nil {
 			tx.Rollback()
 			return nil, err
-		}
-
-		if items.Investigation != nil {
-			*items.Investigation = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Investigation)
-		}
-
-		if items.Repository != nil {
-			*items.Repository = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Repository)
-		}
-
-		if items.Photo != nil {
-			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
 		}
 
 		result = append(result, items)
@@ -624,10 +590,6 @@ func (m *MysqlDatabase) GetNetworkByUser(userId int) ([]*model.User, error) {
 		}
 		items.Password = nil
 
-		if items.Photo != nil {
-			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
-		}
-
 		result = append(result, items)
 	}
 
@@ -667,10 +629,6 @@ func (m *MysqlDatabase) GetExpertFindParam(param string) ([]*model.User, error) 
 			return nil, err
 		}
 		items.Password = nil
-
-		if items.Photo != nil {
-			*items.Photo = fmt.Sprintf("%s%s/%s", viper.Get("VALIDATION_BASE_URL"), viper.Get("VALIDATION_PUBLIC"), *items.Photo)
-		}
 
 		result = append(result, items)
 	}
@@ -808,6 +766,38 @@ func (m *MysqlDatabase) CreateDimension(dimension model.Dimension) (*int64, erro
 	}
 
 	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) UpdateDimension(dimension model.Dimension) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	stmt, err := tx.Prepare("UPDATE `dimension` SET `research_id`= ?,`name`= ?,`variable`= ?,`status`=?  WHERE `dimension_id` = ?")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(dimension.ResearchId, dimension.Name, dimension.Variable, dimension.Status, dimension.DimensionId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -1208,6 +1198,253 @@ func (m *MysqlDatabase) GetCriterioResponseByResearchId(researchId int) ([]*mode
 			return nil, err
 		}
 
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) FetchNetworkRequestByUserId(userId int) ([]*model.User, error) {
+	status := 1
+	expert := "U"
+	result := make([]*model.User, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT DISTINCT `user`.* FROM `user` inner join `network` on `user`.`user_id` = `network`.`user_base_id` where `network`.`user_relation_id` = ? and `user`.`status` = ? and `user`.`role`= ?", userId, status, expert)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.User{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		items.Password = nil
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) FetchNetworkRequestByExpertId(userId int) ([]*model.User, error) {
+	status := 1
+	expert := "U"
+	result := make([]*model.User, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT DISTINCT `user`.* FROM `user` inner join `network_request` on `user`.`user_id` = `network_request`.`user_base_id` where `network_request`.`user_relation_id` = ? and `user`.`status` = ? and `user`.`role`= ? and `network_request`.`status` = ?", userId, status, expert, status)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.User{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		items.Password = nil
+
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+func (m *MysqlDatabase) CreateNetwork(network model.Network) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO `network`( `user_base_id`, `user_relation_id`) VALUES (?,?)")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(network.UserBaseId, network.UserRelationId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) UpdateNetworkRequest(networkRequest model.NetworkRequest) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("UPDATE `network_request` SET `status`= ? WHERE `user_base_id` = ? and `user_relation_id` = ? ")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(networkRequest.Status, networkRequest.UserBaseId, networkRequest.UserRelationId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+
+func (m *MysqlDatabase) CreateResourceUser(resourceUser model.ResourceUser) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO `resource_user`(`expert_id`, `title`, `subtitle`, `link`) VALUES (?,?,?,?)")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(resourceUser.ExpertId, resourceUser.Title, resourceUser.Subtitle, resourceUser.Link)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) DeleteResourceUser(resourceUserId int) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("DELETE FROM `resource_user` WHERE `resource_user_id`= ? ")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(resourceUserId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) FetchAllResourceUserById(userId int) ([]*model.ResourceUser, error) {
+
+	result := make([]*model.ResourceUser, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `resource_user_id`, `expert_id`, `title`, `subtitle`, `link`, `created_at`, `updated_at` FROM `resource_user` WHERE `expert_id`= ?", userId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.ResourceUser{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
 		result = append(result, items)
 	}
 
