@@ -47,7 +47,7 @@ func main() {
 	r.Use(middleware.JWTWithConfig(configJwt))
 	handler.NewMobileHandler(r, db)
 
-	e.Logger.Fatal(e.Start(":80"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
 
 func ensureDir(dirName string) error {
