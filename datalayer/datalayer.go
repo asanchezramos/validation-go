@@ -1012,7 +1012,7 @@ func (m *MysqlDatabase) GetCriterioByExpert(speciality string, expertId int) ([]
 		return nil, err
 	}
 
-	rows, err := tx.Query("SELECT `criterio_id`, `name`, `speciality`, `expert_id`, `created_at`, `updated_at` FROM `criterio` WHERE `speciality` = ? and `expert_id` = ?", speciality, expertId)
+	rows, err := tx.Query("SELECT `criterio_id`, `name`, `speciality`, `expert_id`, `created_at`, `updated_at` FROM `criterio` WHERE `speciality` = ?  ", speciality)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
