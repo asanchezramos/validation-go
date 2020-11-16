@@ -1066,9 +1066,12 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 	if errA != nil {
 		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "No hay error"})
 	}
-	url := "http://192.168.31.210:8080/public/" + dataSigning[0].Link
-	httpimg.Register(pdf, url, "")
-	pdf.Image(url, 15, 15, 267, 0, false, "", 0, "")
+	if len(dataSigning) > 0 {
+
+		url := "http://192.168.31.210:8080/public/" + dataSigning[0].Link
+		httpimg.Register(pdf, url, "")
+		pdf.Image(url, 15, 15, 267, 0, false, "", 0, "")
+	}
 	//pdf table header
 	//pdf = header(pdf, []string{"1st column", "2nd", "3rd", "4th", "5th", "6th"})
 
