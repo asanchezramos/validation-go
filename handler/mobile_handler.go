@@ -13,6 +13,7 @@ import (
 	"github.com/goandreus/validation-go/datalayer/datastore"
 	"github.com/goandreus/validation-go/model"
 	"github.com/jung-kurt/gofpdf"
+	"github.com/jung-kurt/gofpdf/contrib/httpimg"
 	"github.com/labstack/echo/v4"
 )
 
@@ -64,6 +65,10 @@ func NewMobileHandler(e *echo.Group, db datastore.Database) {
 	g.DELETE("/resource-user/:resourceUserId", handler.FetchDeleteResourceUser)
 	g.POST("/resource-user-post", handler.FetchCreateResourceUser)
 	g.GET("/resource-user-post/:userId", handler.FetchResourcesUserBy)
+
+	g.POST("/signing-create", handler.CreateSigning)
+	g.PUT("/signing-update/:signingId", handler.UpdateSigning)
+	g.GET("/signing-get/:expertId", handler.GetSigning)
 
 }
 
@@ -1019,9 +1024,14 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
 	}
 	researchId, _ := strconv.Atoi(researchIdStr)
-	data, err := m.db.GetResearchById(researchId)
-	if err != nil {
+	data, errC := m.db.GetResearchById(researchId)
+	if errC != nil {
 		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Usuario no encontrado"})
+	}
+
+	dataExpert, errB := m.db.GetExpertById(data.ExpertId)
+	if errB != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Experto no encontrado"})
 	}
 
 	pdf := gofpdf.New("L", "mm", "A4", "")
@@ -1045,9 +1055,20 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 	pdf.Ln(20)
 	pdf.SetFont("Times", "", 35)
 	pdf.CellFormat(0, 10, tr(data.Authors), "", 0, "C", false, 0, "")
+	pdf.Ln(12)
+	pdf.SetFont("Times", "", 20)
+	pdf.CellFormat(0, 10, "APROBADO POR: "+dataExpert.Name+dataExpert.FullName, "", 0, "C", false, 0, "")
+
 	pdf.Ln(20)
 	pdf.SetFont("Times", "", 20)
 	pdf.CellFormat(0, 10, data.UpdatedAt, "", 0, "C", false, 0, "")
+	dataSigning, errA := m.db.FetchGetSigning(data.ExpertId)
+	if errA != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "No hay error"})
+	}
+	url := "http://192.168.31.210:8080/public/" + dataSigning[0].Link
+	httpimg.Register(pdf, url, "")
+	pdf.Image(url, 15, 15, 267, 0, false, "", 0, "")
 	//pdf table header
 	//pdf = header(pdf, []string{"1st column", "2nd", "3rd", "4th", "5th", "6th"})
 
@@ -1228,6 +1249,136 @@ func (m *MobileHandler) FetchDeleteResourceUser(c echo.Context) error {
 		response.Success = true
 		response.Message = "Respuesta Creada"
 		response.Data = id
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (m *MobileHandler) CreateSigning(c echo.Context) error {
+	var signing model.Signing
+	response := model.ResponseMessage{}
+
+	// Source
+	file, _ := c.FormFile("fileSigning")
+	var fileName string
+
+	if file != nil {
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		fileName = fmt.Sprintf("%d-%s", time.Now().Unix(), strings.ReplaceAll(file.Filename, " ", "_"))
+
+		// Destination
+		dst, err := os.Create("./public/" + fileName)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		// Copy
+		if _, err = io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		signing.Link = fileName
+	}
+	expertIdStr := c.FormValue("expertId")
+	expertId, _ := strconv.Atoi(expertIdStr)
+	signing.ExpertId = expertId
+	id, err := m.db.FetchCreateSigning(signing)
+	if err != nil {
+		return c.JSON(getStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+
+	if id == nil {
+		response.Success = false
+		response.Message = "Error al crear firma"
+	} else {
+		response.Success = true
+		response.Message = "Respuesta Creada"
+		response.Data = id
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (m *MobileHandler) UpdateSigning(c echo.Context) error {
+	var signing model.Signing
+	response := model.ResponseMessage{}
+	signingIdStr := c.Param("signingId")
+	if signingIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+	signingId, _ := strconv.Atoi(signingIdStr)
+	signing.SigningId = signingId
+	// Source
+	file, _ := c.FormFile("fileSigning")
+	var fileName string
+
+	if file != nil {
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		fileName = fmt.Sprintf("%d-%s", time.Now().Unix(), strings.ReplaceAll(file.Filename, " ", "_"))
+
+		// Destination
+		dst, err := os.Create("./public/" + fileName)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		// Copy
+		if _, err = io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		signing.Link = fileName
+	} else {
+		linkStr := c.FormValue("link")
+		signing.Link = linkStr
+	}
+	expertIdStr := c.FormValue("expertId")
+	expertId, _ := strconv.Atoi(expertIdStr)
+	signing.ExpertId = expertId
+	id, err := m.db.FetchUpdateSigning(signing)
+	if err != nil {
+		return c.JSON(getStatusCode(err), model.ResponseError{Message: err.Error()})
+	}
+
+	if id == nil {
+		response.Success = false
+		response.Message = "Error al crear firma"
+	} else {
+		response.Success = true
+		response.Message = "Respuesta Creada"
+		response.Data = id
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (m *MobileHandler) GetSigning(c echo.Context) error {
+	expertIdStr := c.Param("expertId")
+	if expertIdStr == "" {
+		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
+	}
+	expertId, _ := strconv.Atoi(expertIdStr)
+
+	data, err := m.db.FetchGetSigning(expertId)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "No hay error"})
+	}
+
+	response := model.Response{
+		Success: true,
+		Data:    data,
 	}
 
 	return c.JSON(http.StatusOK, response)

@@ -48,4 +48,7 @@ type Database interface {
 	CreateResourceUser(resourceUser model.ResourceUser) (*int64, error)
 	DeleteResourceUser(resourceUserId int) (*int64, error)
 	FetchAllResourceUserById(userId int) ([]*model.ResourceUser, error)
+	FetchCreateSigning(signing model.Signing) (*int64, error)
+	FetchUpdateSigning(signing model.Signing) (*int64, error)
+	FetchGetSigning(expertId int) ([]*model.Signing, error)
 }

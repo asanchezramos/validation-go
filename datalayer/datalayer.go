@@ -1455,3 +1455,107 @@ func (m *MysqlDatabase) FetchAllResourceUserById(userId int) ([]*model.ResourceU
 
 	return result, nil
 }
+func (m *MysqlDatabase) FetchCreateSigning(signing model.Signing) (*int64, error) {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO `signing`(`expert_id`, `link`) VALUES (?,? )")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(signing.ExpertId, signing.Link)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+func (m *MysqlDatabase) FetchUpdateSigning(signing model.Signing) (*int64, error) {
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("UPDATE `signing` SET `link`= ? WHERE `signing_id` = ? ")
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(signing.SigningId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	id, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+
+func (m *MysqlDatabase) FetchGetSigning(expertId int) ([]*model.Signing, error) {
+
+	result := make([]*model.Signing, 0)
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query("SELECT `signing_id`,`expert_id`, `link`,`created_at`, `updated_at` FROM `signing` WHERE `expert_id`= ?", expertId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		items := &model.Signing{}
+		// Scan the result into the column pointers...
+
+		err = rows.Scan(ScanRow(items)...)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		result = append(result, items)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
