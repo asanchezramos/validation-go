@@ -1503,7 +1503,7 @@ func (m *MysqlDatabase) FetchUpdateSigning(signing model.Signing) (*int64, error
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec(signing.SigningId)
+	res, err := stmt.Exec(signing.Link, signing.SigningId)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
