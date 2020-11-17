@@ -1057,7 +1057,7 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 	pdf.CellFormat(0, 10, tr(data.Authors), "", 0, "C", false, 0, "")
 	pdf.Ln(12)
 	pdf.SetFont("Times", "", 20)
-	pdf.CellFormat(0, 10, "APROBADO POR: "+dataExpert.Name+dataExpert.FullName, "", 0, "C", false, 0, "")
+	pdf.CellFormat(0, 10, "APROBADO POR: "+dataExpert.Name+" "+dataExpert.FullName, "", 0, "C", false, 0, "")
 
 	pdf.Ln(20)
 	pdf.SetFont("Times", "", 20)
@@ -1069,8 +1069,9 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 	if len(dataSigning) > 0 {
 
 		url := "http://192.168.31.210:8080/public/" + dataSigning[0].Link
+		//url := "http://www.inchcape.com.pe/img/inchcape.png"
 		httpimg.Register(pdf, url, "")
-		pdf.Image(url, 15, 15, 267, 0, false, "", 0, "")
+		pdf.Image(url, 200, 150, 50, 0, false, "", 0, "")
 	}
 	//pdf table header
 	//pdf = header(pdf, []string{"1st column", "2nd", "3rd", "4th", "5th", "6th"})
