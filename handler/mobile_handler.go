@@ -1069,8 +1069,9 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 	if len(dataSigning) > 0 {
 
 		//url := "http://192.168.31.210:8080/public/" + dataSigning[0].Link
-		url := "http://104.198.221.95:8080/public/" + dataSigning[0].Link
+		//url := "http://104.198.221.95:8080/public/" + dataSigning[0].Link
 		//url := "http://www.inchcape.com.pe/img/inchcape.png"
+		url := "http://104.198.221.95:8080/public/1605571137-image_picker1133082473993831888.jpg"
 		httpimg.Register(pdf, url, "")
 		pdf.Image(url, 200, 150, 50, 0, false, "", 0, "")
 	}
