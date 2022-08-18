@@ -54,7 +54,7 @@ func (p *MysqlDatastore) Open() (datastore.Database, error) {
 	var connString string
 	//connString = fmt.Sprintf("%s:%s@unix(/%s/%s)/%s?parseTime=true", dbUser, dbPwd, socketDir, instanceConnectionName, dbName)
 
-	connString = "root:UmaDev2020!@tcp(35.247.255.202:3306)/bd_juicio_experto"
+	connString = "admin-mysql:admin2021!@tcp(umadev.pe:3306)/bd_juicio_experto"
 	//connString = "root:@tcp(localhost:3306)/bd_juicio_experto"
 	db, err := sql.Open("mysql", connString)
 	if err != nil {
