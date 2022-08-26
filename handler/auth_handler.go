@@ -64,7 +64,6 @@ func (a *AuthHandler) Register(c echo.Context) error {
 		if _, err = io.Copy(dst, src); err != nil {
 			return err
 		}
-
 		user.Photo = &fileName
 	}
 
@@ -74,6 +73,7 @@ func (a *AuthHandler) Register(c echo.Context) error {
 	user.Password = &password
 
 	user.Phone = c.FormValue("phone")
+	user.Orcid = c.FormValue("orcid")
 	specialty := c.FormValue("specialty")
 	if specialty == "" {
 		user.Specialty = nil
@@ -112,11 +112,13 @@ func (a *AuthHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.ResponseError{Message: err.Error()})
 	}
 
-	user, err := a.db.GetUserByEmail(auth.Mail)
+	fmt.Println("correo: " +auth.Mail)
+	user, err := a.db.GetUserByEmail(auth.Mail) 
 	if err != nil {
 		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "Experto no encontrado"})
 	}
 
+	fmt.Println("user: " + user.Name)
 	compare := encrypt.BcryptCheck(*user.Password, auth.Password)
 
 	if compare {

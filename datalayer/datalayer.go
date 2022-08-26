@@ -77,7 +77,7 @@ func (m *MysqlDatabase) Register(user model.User) (*int64, error) {
 		return nil, err
 	}
 
-	stmt, err := tx.Prepare("INSERT INTO `user` (`name`, `full_name`, `photo`, `mail`, `password`, `phone`, `specialty`, `role`) VALUES (?,?,?,?,?,?,?,?)")
+	stmt, err := tx.Prepare("INSERT INTO `user` (`name`, `full_name`, `photo`, `mail`, `password`, `phone`, `specialty`, `role`, `orcid`) VALUES (?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -85,7 +85,7 @@ func (m *MysqlDatabase) Register(user model.User) (*int64, error) {
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec(user.Name, user.FullName, user.Photo, user.Mail, user.Password, user.Phone, user.Specialty, user.Role)
+	res, err := stmt.Exec(user.Name, user.FullName, user.Photo, user.Mail, user.Password, user.Phone, user.Specialty, user.Role,user.Orcid)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -114,23 +114,27 @@ func (m *MysqlDatabase) GetUserByEmail(email string) (*model.User, error) {
 	}
 
 	item := &model.User{}
-
+ 
 	row := tx.QueryRow("SELECT * FROM `user` WHERE mail = ? AND `status` = ?", email, status)
 
+	fmt.Println("0correo y estatuis: " +item.Name + "correo y estatuis: "    )
 	if row != nil {
 		err := row.Scan(ScanRow(item)...)
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 			tx.Rollback()
 		}
 
 	}
+	fmt.Println("1correo y estatuis: " +item.Name + "correo y estatuis: "    )
 
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Println("2correo y estatuis: " +item.Name + "correo y estatuis: "    )
 	return item, nil
 }
 

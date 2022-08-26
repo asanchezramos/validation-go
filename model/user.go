@@ -15,6 +15,7 @@ type User struct {
 	Status    int     `json:"status" db:"status"`
 	CreatedAt string  `json:"-" db:"created_at"`
 	UpdatedAt string  `json:"-" db:"updated_at"`
+	Orcid  	  string  `json:"orcid" db:"orcid"`
 }
 
 type Auth struct {
