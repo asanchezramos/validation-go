@@ -1020,7 +1020,7 @@ func (m *MobileHandler) FetchCriterioResponseByResearchId(c echo.Context) error 
 }
 func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 	researchIdStr := c.Param("researchId")
-	
+
 	if researchIdStr == "" {
 		return c.JSON(http.StatusNotFound, model.ErrNotFound.Error())
 	}
@@ -1069,8 +1069,8 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 	}
 	if len(dataSigning) > 0 {
 
-		url := "http://192.168.18.5:4000/public/" + dataSigning[0].Link
-		// url := "http://experto.umadev.pe:4000/public/" + dataSigning[0].Link
+		// url := "http://192.168.18.5:4000/public/" + dataSigning[0].Link
+		url := "http://experto.umadev.pe:4000/public/" + dataSigning[0].Link
 		//url := "http://104.198.221.95:8080/public/" + dataSigning[0].Link
 		//url := "http://www.inchcape.com.pe/img/inchcape.png"
 		//url := "http://104.198.221.95:8080/public/1605571137-image_picker1133082473993831888.jpg"
