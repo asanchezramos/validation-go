@@ -1062,7 +1062,21 @@ func (m *MobileHandler) FetchCertificateByResearchId(c echo.Context) error {
 
 	pdf.Ln(20)
 	pdf.SetFont("Times", "", 20)
-	pdf.CellFormat(0, 10, data.UpdatedAt, "", 0, "C", false, 0, "")
+
+	loc, err := time.LoadLocation("America/Lima")
+		if err != nil {
+		panic(err)
+	}
+	 
+	timeString := "" + data.UpdatedAt
+	theTime, err := time.Parse("2006-01-02 03:04:05", timeString)
+	if err != nil {
+		fmt.Println("Could not parse time:", err)
+	}
+	// fmt.Println("The time is", )
+
+
+	pdf.CellFormat(0, 10, theTime.In(loc).Format("2006-01-02 03:04:05"), "", 0, "C", false, 0, "")
 	dataSigning, errA := m.db.FetchGetSigning(data.ExpertId)
 	if errA != nil {
 		return c.JSON(http.StatusNotFound, model.ResponseMessage{Success: false, Message: "No hay error"})
